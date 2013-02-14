@@ -6,51 +6,88 @@ AwardModel.py
 Created by Matt Derry on 2013-02-04.
 """
 
-import sys
-import os
-import string
+import sys, os, string, datetime, sets
+from noms import *
 
 class AwardModel(object):
-   "A class representing the category, winner, show, and presenter of an award"
-   def __init__(self, category=None, winner=None, show=None, presenter=None):
-      self.category = category
-      self.winner = winner
-      self.show = show
-      self.presenter = presenter
-      self.score = 0
+    "A class representing the category, winner, show, and presenter of an award"
+    def __init__(self, timestamp=None):
+        self.category = None
+        self.winner = None
+        self.presenter = None
+        self.score = 0
+        self.nominees = []
+        self.timestamp = timestamp
 
-   def __str__(self):
-      return "Score [%d]: %s goes to %s for %s, presented by %s." % (self.score, self.category.encode('ascii', 'ignore').strip() if self.category is not None else self.category, self.winner.encode('ascii', 'ignore').strip() if self.winner is not None else self.winner, self.show.encode('ascii', 'ignore').strip() if self.show is not None else self.show, self.presenter.encode('ascii', 'ignore').strip() if self.presenter is not None else self.presenter) 
+    def addNominee(self, nom):
+        self.nominees.append(nom)
+    
+    def removeNominee(self, nom):
+        if nom in self.nominees:
+            self.nominees.remove(nom)
+    
+    def printAward(self):
+        print "Award: " + self.category
+        if self.winner is not None:
+            print "\tWinner: " + self.winner.printNom()
 
-   def length(self):
-      length = 0
-      if self.category is not None:
-         length = length + 1
-      if self.show is not None:
-         length = length + 1
-      if self.presenter is not None:
-         length = length + 1
-      if self.winner is not None:
-         length = length + 1
+    def getKeywords(self):
+        words = []
+        if self.category is not None:
+            s = self.category.translate(string.maketrans("",""), string.punctuation)
+            words = s.lower().replace("movie", "motion picture").split()
+            if "television" in words:
+                indx = words.index("television")
+                words[indx] = "tv"
+            removeThese = ["best", "the", "in", "a", "or", "made"] # stop-list...
+            for r in removeThese:
+                if r in words:
+                    words.remove(r)
+        return words
+                
+    def compareKeywords(self, award):
+        if self.category == award.category:
+            return 0
+        thesekeys = set(self.getKeywords())
+        thosekeys = set(award.getKeywords())
+        # check for presence of unique identifiers in keyword lists
+        uniqueIDs = ["actor", "actress"]
+        for u in uniqueIDs:
+            member1 = u in thesekeys
+            member2 = u in thosekeys
+            if bool(member1) != bool(member2):
+                return -1
+        maxScore = min(len(thesekeys), len(thosekeys))
+        result = maxScore - len(thesekeys.intersection(thosekeys))
+        return result
+    
+    # called on award with a matching category
+    def reconcile(self, award):
+        if self.winner.movieOrShow is None:
+            if award.winner.movieOrShow is not None:
+                self.winner.movieOrShow = award.winner.movieOrShow
+        else:
+            if award.winner.movieOrShow is not None:
+                if (award.winner.name != "" and award.winner.name == self.winner.name) or (award.winner.song != "" and self.winner.song == award.winner.song):
+                    self.winner.movieOrShow = award.winner.movieOrShow
+        if self.winner.name is None:
+            if award.winner.name is not None:
+                self.winner.name = award.winner.name
+        else:
+            if award.winner.name is not None:
+                if (award.winner.movieOrShow != "" and award.winner.movieOrShow == self.winner.movieOrShow) or (award.winner.song != "" and self.winner.song == award.winner.song):
+                    self.winner.name = award.winner.name
+        if self.winner.song is None:
+            if award.winner.song is not None:
+                self.winner.song = award.winner.song
+        else:
+            if award.winner.song is not None:
+                if (award.winner.movieOrShow != "" and award.winner.movieOrShow == self.winner.movieOrShow) or (award.winner.name != "" and award.winner.name == self.winner.name):
+                    self.winner.song = award.winner.song
+        return
 
-      return length
+        
+    def timeAsInt(self):
+        hms = self.timestamp.split(':')
+        return (int(hms[1])*10000) + (int(hms[1])*100) + int(hms[2])
 
-   def compareAwards(self, award):
-      similarity = 0
-      if self.category is not None and award.category is not None:
-         if self.category.strip().lower() == award.category.strip().lower():
-            similarity = similarity + 1
-
-      if self.winner is not None and award.winner is not None:
-         if self.winner.strip().lower() == award.winner.strip().lower():
-            similarity = similarity + 1
-
-      if self.show is not None and award.show is not None:
-         if self.show.strip().lower() == award.show.strip().lower():
-            similarity = similarity + 1
-
-      if self.presenter is not None and award.presenter is not None:
-         if self.presenter.strip().lower() == award.presenter.strip().lower():
-            similarity = similarity + 1
-
-      return similarity

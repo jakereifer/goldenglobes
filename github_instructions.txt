@@ -1,0 +1,13 @@
+git clone git@github.com/wroever/goldenglobes.git --- clones into project repository, creates a folder called goldenglobes in your current directory containing all of the project files
+
+git commit -a --- automatically stages then commits all modified files. A prompt for a commit message will open in the vi editor. Type a message describing what changes you made and then :wq to exit vi and commit. You will then need to type 'git pull' then 'git push' to actually update the repository.
+
+git add filename.extension --- stage/track changes to a new file. IMPORTANT: you must use this command on any new files you plan to add to the project (before you commit) to ensure git tracks changes in the file.
+
+git checkout filename.ext --- unstage (un-add) the modified file
+
+git diff --- view changes to files that have been modified but not committed/staged yet (you probably shouldn't have to use this but just in case… changed lines are marked with "+")
+
+git pull --- IMPORTANT: you should pull before you start working on anything to ensure you're working on the most recent version of the project. If your local version is already the most recent version, you should get a message like "Already up-to-date". Otherwise you may need to resolve some changes in certain files, which git will mark-up with a bunch of stuff (+'s or >'s or something like that). Usually, you should just be able to delete the stuff and continue on.
+
+git push -- write all changes to the repo.

@@ -6,7 +6,7 @@ AwardModel.py
 Created by Matt Derry on 2013-02-04.
 """
 
-import sys, os, string, datetime, sets
+import sys, os, string, sets, math
 from noms import *
 
 class AwardModel(object):
@@ -25,6 +25,16 @@ class AwardModel(object):
     def removeNominee(self, nom):
         if nom in self.nominees:
             self.nominees.remove(nom)
+
+    def probableNoms(self):
+        sortedNoms = sorted(self.nominees, key=lambda nom: nom.score, reverse=True)
+        result = []
+        i = 0
+        while i < min(5,len(sortedNoms)):
+            result.append(sortedNoms[i])
+            i = i + 1
+        return result
+            
     
     def printAward(self):
         print "Award: " + self.category
@@ -44,9 +54,12 @@ class AwardModel(object):
                 if r in words:
                     words.remove(r)
         return words
-                
-    def compareKeywords(self, award):
+    
+    # compareAwards -- returns 0 if awards deemed to be identical
+    def compareAwards(self, award):
         if self.category == award.category:
+            return 0
+        if self.winner.name == award.winner.name and self.winner.movieOrShow == award.winner.movieOrShow and self.winner.song == award.winner.song:
             return 0
         thesekeys = set(self.getKeywords())
         thosekeys = set(award.getKeywords())
@@ -87,7 +100,6 @@ class AwardModel(object):
         return
 
         
-    def timeAsInt(self):
-        hms = self.timestamp.split(':')
-        return (int(hms[1])*10000) + (int(hms[1])*100) + int(hms[2])
+    def timeAsString(self):
+        return str(self.timestamp.tm_hour) + ":" + str(self.timestamp.tm_min) + ":" + str(self.timestamp.tm_sec)
 

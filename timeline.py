@@ -9,7 +9,7 @@ from commentary import *
 class timeline(object):
     # class representing timeline of events
 
-    def __init__(self, begin="", endtime="", fashion = None, awards = None):
+    def __init__(self, begin=None, endtime=None, fashion=None, awards=None):
         self.begin = begin
         self.endtime = endtime
         self.fashion = fashion
@@ -19,8 +19,14 @@ class timeline(object):
         self.awards.append(anAward)
         return
     
+    def timeAsString(self, beginOrEnd):
+        if beginOrEnd == 0:
+            return str(self.begin.tm_hour) + ":" + str(self.begin.tm_min) + ":" + str(self.begin.tm_sec)
+        else:
+            return str(self.endtime.tm_hour) + ":" + str(self.endtime.tm_min) + ":" + str(self.endtime.tm_sec)
+    
     def summary(self):
-        print "THE 2013 GOLDEN GLOBE AWARDS -------- 13 January 2013, (" + self.begin + " - " + self.endtime + ") ------------\n\n"
+        print "\nTHE 2013 GOLDEN GLOBE AWARDS -------- 13 January 2013, (" + self.timeAsString(0) + " - " + self.timeAsString(1) + ") ------------\n\n"
         self.printFashionComm()
         for indx in range(len(self.awards)):
             self.printAwardInfo(indx)
@@ -45,11 +51,11 @@ class timeline(object):
         anAward = self.awards[index]
         if index == 0:
             print "\n\n~Awards~"
-        print "\n---- " + anAward.timestamp + " -------------------------------------------"
+        print "\n---- " + anAward.timeAsString() + " -------------------------------------------"
         print "Award Category: " + anAward.category
-    # nominee structure needs to say who and for what (pick out picture/show)
+        # nominee structure needs to say who and for what (pick out picture/show)
         nomstring = ""
-        for nom in anAward.nominees:
+        for nom in anAward.probableNoms():
             nomstring = nomstring + "\n\t"
             if nom.song:
                 nomstring = nomstring + nom.song + ", by "
@@ -57,7 +63,9 @@ class timeline(object):
                 nomstring = nomstring + nom.name + " for "
             if nom.movieOrShow:
                 nomstring = nomstring + nom.movieOrShow
-        print "Nominees: " + nomstring
+            else:
+                nomstring = nomstring + "Unknown"
+        print "Probable Nominees: " + nomstring
         presenter = "Unknown"
                     #print "Presented by: " + presenter
         winner = ""
@@ -67,6 +75,8 @@ class timeline(object):
             winner = winner + anAward.winner.name + " for "
         if anAward.winner.movieOrShow:
             winner = winner + anAward.winner.movieOrShow
+        else:
+            winner = winner + "Unknown"
         print "Winner: " + winner
     # need to fix list comp below (and implement commentary...)
     #print "Select Commentary:" +

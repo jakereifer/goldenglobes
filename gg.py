@@ -140,7 +140,7 @@ with con:
             i = i+1
 
         # post-win opinions
-        matchObj = re.search(r'([A-Z][a-z\'-]+ [A-Z][a-z\'-]+) (should have won|didn\'t win)( for )?( #)?(.*)', row[1])
+        matchObj = re.search(r'([A-Z][a-z\'-]+ [A-Z][a-z\'-]+) (should have won|didn\'t win|should win|better win|is nominated|doesn\'t win|is a nominee|is a lock|would win|could win|has to win|is gonna win|is going to win)( for )?( #)?(.*)', row[1])
         if matchObj:
             tStamp = time.strptime(re.search(r'\s([\w:]+)', str(row[0])).group(1).encode('ascii', 'ignore'), "%H:%M:%S")
             currIndx = 0
@@ -189,9 +189,9 @@ with con:
                 awards[currIndx].addNominee(tmpNom)
                 
         # pre-win opinions
-        matchObj = re.search(r'([A-Z][a-z\'-]+ [A-Z][a-z\'-]+) (should win|better win|is nominated|doesn\'t win|is a nominee|is a lock|would win|could win|has to win|is gonna win|is going to win)( for )?( #)?(.*)', row[1])
-        if matchObj:
-            tStamp = re.search(r'\s([\w:]+)', str(row[0])).group(1).encode('ascii', 'ignore')
+                    #matchObj = re.search(r'([A-Z][a-z\'-]+ [A-Z][a-z\'-]+) (should win|better win|is nominated|doesn\'t win|is a nominee|is a lock|would win|could win|has to win|is gonna win|is going to win)( for )?( #)?(.*)', row[1])
+                    # if matchObj:
+                        # tStamp = re.search(r'\s([\w:]+)', str(row[0])).group(1).encode('ascii', 'ignore')
             #print tStamp
             #print matchObj.groups()
 

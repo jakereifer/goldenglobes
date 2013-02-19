@@ -9,6 +9,7 @@ from award import *
 from noms import *
 from commentary import *
 from regex import *
+from baby_names import *
 
 # queries to get beginning and end time of the event
 sql_get_begEnd = ["SELECT created_at FROM tweets ORDER BY created_at ASC LIMIT 0,1", "SELECT created_at FROM tweets ORDER BY created_at DESC LIMIT 0,1"]
@@ -106,6 +107,15 @@ with con:
 
     eventTimeline.awards = sorted(awards, key=lambda award: award.timestamp)
 
+    # filling in the blanks with award winners...
+    unidentifiedWorks = []
+    for award in awards:
+        w = award.winner
+        cat = award.category
+        if re.search(r'([Dd]ire|[Aa])ct(or|ress)', cat) or re.search(r'[Ss]core', cat) or re.search(r'[Ss]creenplay', cat):
+            if w is not None and w.movieOrShow is None:
+                unidentifiedWorks.append(award)
+
     # commence query process for fashion commentary
     cur.execute(sql_all_tweets)
     rows = cur.fetchall()
@@ -139,8 +149,22 @@ with con:
                     fashion.append(f)
             i = i+1
 
-        # post-win opinions
-        matchObj = re.search(r'([A-Z][a-z\'-]+ [A-Z][a-z\'-]+) (should have won|didn\'t win|should win|better win|is nominated|doesn\'t win|is a nominee|is a lock|would win|could win|has to win|is gonna win|is going to win)( for )?( #)?(.*)', row[1])
+        # again... filling in the blanks w/ award winners
+        rem = None
+        for awd in unidentifiedWorks:
+            result1 = re.search(r''+awd.winner.name+' for ([\'\"])?([A-Z][a-z][A-Za-z\s-]+) #', row[1])
+            if result1:
+                result2 = result1.group(2).strip("\"\'- ")
+                if result2 and re.search(r'[Bb]est', result2) is None:
+                    rem = awd
+        if rem is not None:
+            for award in awards:
+                if award.category == rem.category:
+                    award.winner.movieOrShow = result2
+            unidentifiedWorks.remove(rem)
+
+        # pre- and post-win opinions -- used to get nominees
+        matchObj = re.search(r'([A-Z][a-z\'-]+ [A-Z][a-z\'-]+) (should have won|didn\'t win|should win|better win|is nominated|doesn\'t win|is a nominee|is a lock|would win|could win|has to win|is gonna win|is going to win|to win|will win|don\'t win)( for )?( #)?(.*)', row[1])
         if matchObj:
             tStamp = time.strptime(re.search(r'\s([\w:]+)', str(row[0])).group(1).encode('ascii', 'ignore'), "%H:%M:%S")
             currIndx = 0
@@ -153,7 +177,6 @@ with con:
             iter = max(0, currIndx-1)
             iterMax = min(currIndx+2, len(awards))
             found = 0
-                #print str(iter) + " | " + str(iterMax)
             while iter < iterMax:
                 cat = awards[iter].category
                 if re.search(r'([Dd]ire|[Aa])ct(or|ress)', cat) or re.search(r'[Ss]core', cat) or re.search(r'[Ss]creenplay', cat) or re.search(r'[Ss]ong', cat):
@@ -177,24 +200,26 @@ with con:
                             found = 1
                             break
                 iter = iter + 1
-                    
+                
             if found == 0:
                 tmpNom = nominee()
                 cat = awards[currIndx].category
-                if re.search(r'([Dd]ire|[Aa])ct(or|ress)', cat) or re.search(r'[Ss]core', cat) or re.search(r'[Ss]creenplay', cat) or re.search(r'[Ss]ong', cat):
-                    tmpNom.name = nomName
+                first = nomName.split()[0]
+                if re.search(r'[Dd]irector', cat) or re.search(r'[Ss]core', cat) or re.search(r'[Ss]creenplay', cat) or re.search(r'[Ss]ong', cat):
+                    if first in boy_names or first in girl_names:
+                        tmpNom.name = nomName
+            # AT THIS POINT NT DOING ANYTHING IF CATEGORY DOESNT ALIGN W NAME...
+                elif re.search(r'[Aa]ctor', cat):
+                    if first in boy_names:
+                        tmpNom.name = nomName
+                elif re.search(r'[Aa]ctress', cat):
+                    if first in girl_names:
+                        tmpNom.name = nomName
                 else:
-                    tmpNom.movieOrShow = nomName
+                    if first not in boy_names and first not in girl_names:
+                        tmpNom.movieOrShow = nomName
                 tmpNom.score = 0
                 awards[currIndx].addNominee(tmpNom)
-                
-        # pre-win opinions
-                    #matchObj = re.search(r'([A-Z][a-z\'-]+ [A-Z][a-z\'-]+) (should win|better win|is nominated|doesn\'t win|is a nominee|is a lock|would win|could win|has to win|is gonna win|is going to win)( for )?( #)?(.*)', row[1])
-                    # if matchObj:
-                        # tStamp = re.search(r'\s([\w:]+)', str(row[0])).group(1).encode('ascii', 'ignore')
-            #print tStamp
-            #print matchObj.groups()
-
 
     eventTimeline.fashion = fashion
 
